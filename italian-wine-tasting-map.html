@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Italian roadtrip</title>
+<style>
+  :root{
+    --intonaco:#E6D0B4;      /* raw plaster ground */
+    --carta:#9E3A2B;         /* Pompeian red land */
+    --carta-edge:#7A2A1E;
+    --isola:#C49B7C;         /* faded clay islands */
+    --vino:#C13529;          /* Campari / Tolix red */
+    --vino-vivo:#D64438;
+    --oro:#B5723E;           /* copper pendant */
+    --crema:#F2E4CA;
+    --latte:#3A2A1D;         /* espresso text on plaster */
+    --latte-dim:#8A6F52;
+    --ink:#33261B;           /* text on cream sheet */
+    --ink-soft:#7A6248;
+    --sheet:#F3E8D3;
+    --display:Futura,"Avenir Next","Century Gothic","Trebuchet MS",sans-serif;
+    --sans:"Avenir Next",Avenir,Seravek,"Gill Sans","Segoe UI",system-ui,sans-serif;
+    --type:Copperplate,"Copperplate Gothic Light","Big Caslon",Baskerville,"Palatino Linotype",serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(90% 60% at 18% 12%, rgba(213,163,134,.38), transparent 60%),
+      radial-gradient(70% 50% at 85% 28%, rgba(246,235,214,.55), transparent 65%),
+      radial-gradient(80% 60% at 60% 92%, rgba(203,153,120,.30), transparent 60%),
+      linear-gradient(180deg, #ECDCC2 0%, var(--intonaco) 55%, #D8BC99 100%);
+    color:var(--latte);
+    font-family:var(--sans);
+    display:flex;flex-direction:column;
+    height:100dvh;overflow:hidden;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    text-align:center;
+    padding:calc(env(safe-area-inset-top) + 14px) 20px 6px;
+    flex:0 0 auto;
+  }
+  .eyebrow{
+    font-family:var(--display);font-weight:700;
+    font-size:12px;letter-spacing:.26em;
+    color:var(--vino);margin-bottom:6px;
+  }
+  h1{
+    font-family:var(--display);font-weight:700;
+    text-transform:uppercase;
+    font-size:clamp(24px,4.2vw,38px);letter-spacing:.05em;line-height:1.05;
+  }
+  .subtitle{
+    margin-top:6px;font-family:var(--type);
+    font-size:12px;color:var(--latte-dim);letter-spacing:.03em;
+  }
+
+  /* ---------- map ---------- */
+  .map-wrap{
+    flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;
+    padding:4px 8px;
+  }
+  svg{height:100%;width:100%;max-width:720px}
+  .land{fill:var(--carta);stroke:var(--carta-edge);stroke-width:1.2;stroke-linejoin:round}
+  .island{fill:var(--isola);stroke:#AE8768;stroke-width:1;stroke-linejoin:round}
+  .sea-label{
+    font-family:var(--type);font-size:10.5px;letter-spacing:.24em;
+    fill:#9B7E58;text-transform:uppercase;
+  }
+  .region-label{
+    font-family:var(--type);font-size:9px;letter-spacing:.1em;
+    fill:rgba(242,228,202,.44);text-transform:uppercase;
+    text-anchor:middle;pointer-events:none;
+  }
+  .region-label.isle{fill:rgba(58,42,29,.34)}
+  .city-dot{fill:rgba(242,228,202,.92);stroke:rgba(51,38,27,.55);stroke-width:.6}
+  .city-label{
+    font-family:var(--type);font-size:7.5px;letter-spacing:.08em;
+    fill:var(--latte);text-transform:uppercase;pointer-events:none;
+    stroke:rgba(242,228,202,.8);stroke-width:2.5px;paint-order:stroke;stroke-linejoin:round;
+  }
+  .route{
+    fill:none;stroke:var(--oro);stroke-width:1.6;opacity:.75;
+    stroke-dasharray:1 7;stroke-linecap:round;
+  }
+  .pin{cursor:pointer;outline:none}
+  .pin circle.dot{
+    fill:var(--crema);stroke:var(--latte);stroke-width:1.8;
+    transition:fill .2s ease, r .2s ease;
+  }
+  .pin .num{
+    font-family:var(--display);font-size:14px;fill:var(--vino);
+    text-anchor:middle;dominant-baseline:central;pointer-events:none;font-weight:700;
+  }
+  .pin .halo{fill:none;stroke:var(--oro);stroke-width:1.4;opacity:0}
+  .pin.active circle.dot{fill:var(--vino-vivo)}
+  .pin.active .num{fill:var(--crema)}
+  .pin.active .halo{opacity:.9;animation:halo 1.8s ease-out infinite}
+  .pin:focus-visible circle.dot{stroke:var(--oro);stroke-width:2.6}
+  @keyframes halo{
+    0%{r:14;opacity:.9}
+    100%{r:26;opacity:0}
+  }
+  .pin-label{
+    font-family:var(--type);font-size:10px;letter-spacing:.12em;
+    fill:var(--latte);text-transform:uppercase;pointer-events:none;
+    stroke:rgba(242,228,202,.85);stroke-width:3px;paint-order:stroke;stroke-linejoin:round;
+  }
+
+  /* ---------- wine rail ---------- */
+  .rail{
+    flex:0 0 auto;display:flex;gap:10px;overflow-x:auto;
+    padding:10px 16px 8px;
+    scrollbar-width:none;justify-content:safe center;
+  }
+  .rail::-webkit-scrollbar{display:none}
+  .credit{
+    flex:0 0 auto;text-align:center;
+    font-family:var(--type);
+    font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--latte-dim);
+    padding:0 16px calc(env(safe-area-inset-bottom) + 8px);
+  }
+  .chip{
+    flex:0 0 auto;display:flex;align-items:center;gap:10px;
+    background:rgba(58,42,29,.05);
+    border:1px solid rgba(58,42,29,.28);
+    border-radius:999px;padding:8px 16px 8px 8px;
+    color:var(--latte);font-family:var(--sans);font-size:13px;letter-spacing:.02em;
+    cursor:pointer;transition:background .2s ease,border-color .2s ease;
+  }
+  .chip .n{
+    width:26px;height:26px;border-radius:50%;background:var(--vino);color:var(--crema);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--display);font-weight:700;font-size:13px;
+  }
+  .chip small{display:block;font-family:var(--type);color:var(--latte-dim);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+  .chip.active,.chip:hover{background:rgba(193,53,41,.10);border-color:var(--vino)}
+  .chip:focus-visible{outline:2px solid var(--oro);outline-offset:2px}
+
+  /* ---------- sheet ---------- */
+  .backdrop{
+    position:fixed;inset:0;background:rgba(51,38,27,.5);
+    opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:9;
+  }
+  .backdrop.show{opacity:1;pointer-events:auto}
+  .sheet{
+    position:fixed;left:50%;bottom:0;transform:translate(-50%,105%);
+    width:min(660px,100%);max-height:82dvh;overflow-y:auto;
+    background:var(--sheet);color:var(--ink);
+    border-radius:18px 18px 0 0;z-index:10;
+    padding:22px 26px calc(env(safe-area-inset-bottom) + 26px);
+    box-shadow:0 -12px 40px rgba(51,38,27,.4);
+    transition:transform .32s cubic-bezier(.32,.72,.28,1);
+  }
+  .sheet.show{transform:translate(-50%,0)}
+  .sheet .grab{width:44px;height:4px;border-radius:2px;background:#D6BE9C;margin:0 auto 16px}
+  .sheet .close{
+    position:absolute;top:14px;right:16px;border:none;background:none;
+    font-size:22px;line-height:1;color:var(--ink-soft);cursor:pointer;padding:6px;
+  }
+  .stop-eyebrow{
+    font-family:var(--type);
+    font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--vino);
+    margin-bottom:8px;
+  }
+  .sheet h2{
+    font-family:var(--display);font-weight:700;font-size:23px;line-height:1.14;
+    letter-spacing:.01em;margin-bottom:3px;
+  }
+  .producer{
+    font-family:var(--type);font-size:13px;color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+  .facts{
+    display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;
+  }
+  .fact{
+    font-family:var(--type);
+    font-size:10.5px;letter-spacing:.04em;color:var(--ink);
+    border:1px solid #C7AB85;border-radius:999px;padding:5px 12px;background:rgba(255,255,255,.35);
+  }
+  .blend{margin:6px 0 16px}
+  .blend-title{
+    font-family:var(--type);
+    font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .bar{
+    display:flex;height:26px;border-radius:6px;overflow:hidden;
+    border:1px solid rgba(51,38,27,.25);
+  }
+  .seg{
+    display:flex;align-items:center;justify-content:center;
+    font-size:10.5px;letter-spacing:.05em;color:#F6F1E4;white-space:nowrap;overflow:hidden;
+  }
+  .seg.swap{box-shadow:inset 0 0 0 2px var(--oro)}
+  .legend{font-family:var(--type);font-size:10.5px;color:var(--ink-soft);margin-top:5px;letter-spacing:.02em}
+  .sheet h3{
+    font-family:var(--display);font-weight:700;font-size:12.5px;
+    letter-spacing:.18em;text-transform:uppercase;
+    margin:16px 0 5px;color:var(--vino);
+  }
+  .sheet p{font-size:14.5px;line-height:1.55;color:var(--ink)}
+  .rule{border:none;border-top:1px solid #D8C4A2;margin:18px 0 2px}
+
+  @media (prefers-reduced-motion:reduce){
+    .sheet,.backdrop,.chip,.pin circle.dot{transition:none}
+    .pin.active .halo{animation:none;opacity:.6}
+  }
+  @media (max-height:620px){
+    header{padding-top:8px}
+    .subtitle{display:none}
+    h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Brusco Wine Club.</div>
+  <h1>Italian roadtrip.</h1>
+  <div class="subtitle">From the Parma hills to the Cilento coast — tap a pin</div>
+</header>
+
+<div class="map-wrap">
+  <svg viewBox="0 0 600 700" role="img" aria-label="Map of Italy with five numbered wine stops">
+    <!-- Sardinia -->
+    <path class="island" d="M128.8,374.5 L145.4,383.2 L157.8,421.6 L148.1,504 L121.9,508.4 L92,520.8 L92,468.1 L80.5,417.3 L81.9,393.1 Z"/>
+    <!-- Sicily -->
+    <path class="island" d="M423.2,559.9 L408.5,585.9 L399.7,607.6 L409,634.9 L401.6,657.8 L361.1,634.3 L330.3,620.6 L307.3,607 L277.8,589 L280.6,575.4 L291.2,566.1 L320.6,568.5 L350.5,574.1 L406.6,563 Z"/>
+    <!-- Mainland -->
+    <path class="land" d="M55.2,217 L92,186 L117.3,179.8 L158.7,199.6 L177.1,212.7 L179.4,232.5 L193.2,270.9 L216.2,303.8 L248.4,322.4 L271.4,345.3 L286.6,362.7 L307.3,377 L330.3,377.6 L351.9,403 L365.7,416.6 L385,411.1 L395.1,430.9 L408.5,450.7 L424.6,448.3 L429.6,453.8 L433.3,472.4 L437,549.9 L425.5,569.8 L426.9,580.9 L453.6,561.7 L468.3,549.3 L493.6,509.6 L494.5,489.8 L464.6,470 L479.3,429.7 L499.1,423.5 L533.1,448.9 L550.2,465.6 L556.1,443.3 L530.8,412.9 L501.4,393.7 L481.6,382.5 L454.5,370.8 L437.9,351.5 L446.2,342.2 L449.9,335.4 L439.3,331.7 L411.7,334.2 L395.6,328.6 L359.7,299.5 L344.1,269.7 L332.1,232.5 L283.8,200.9 L270.5,178.6 L280.6,144.5 L273.2,115.3 L322,100.4 L338.1,102.3 L331.2,52.7 L276,40.3 L243.8,24.8 L211.6,18.6 L184,43.4 L133.4,58.9 L78.2,65.1 L66.7,83.7 L20.7,91.1 L11.5,136.4 L27.6,164.3 L48.3,198.4 Z"/>
+
+    <!-- sea labels -->
+    <text class="sea-label" x="270" y="492" text-anchor="middle">Mar</text>
+    <text class="sea-label" x="270" y="510" text-anchor="middle">Tirreno</text>
+    <text class="sea-label" x="410" y="235" transform="rotate(38 410 235)">Mare Adriatico</text>
+
+    <!-- soft region labels -->
+    <g aria-hidden="true">
+      <text class="region-label" x="72" y="150">Piemonte</text>
+      <text class="region-label" x="156" y="105">Lombardia</text>
+      <text class="region-label" x="290" y="95">Veneto</text>
+      <text class="region-label" x="250" y="199">Emilia</text>
+      <text class="region-label" x="218" y="258">Toscana</text>
+      <text class="region-label" x="306" y="240">Marche</text>
+      <text class="region-label" x="304" y="352">Lazio</text>
+      <text class="region-label" x="345" y="316">Abruzzo</text>
+      <text class="region-label" x="366" y="349">Campania</text>
+      <text class="region-label" x="504" y="418">Puglia</text>
+      <text class="region-label" x="458" y="512" transform="rotate(-78 458 512)">Calabria</text>
+      <text class="region-label isle" x="352" y="606">Sicilia</text>
+      <text class="region-label isle" x="118" y="452">Sardegna</text>
+    </g>
+
+    <!-- city reference points -->
+    <g aria-hidden="true">
+      <circle class="city-dot" cx="227.2" cy="174.2" r="2"/>
+      <text class="city-label" x="233" y="171" text-anchor="start">Bologna</text>
+      <circle class="city-dot" cx="279.7" cy="334.8" r="2"/>
+      <text class="city-label" x="285.5" y="337.5" text-anchor="start">Roma</text>
+      <circle class="city-dot" cx="362" cy="399.9" r="2"/>
+      <text class="city-label" x="356" y="402.5" text-anchor="end">Napoli</text>
+    </g>
+
+    <!-- route in pour order: Parma → Cilento → Summonte → Todi → Verona -->
+    <path class="route" d="M176.6,161.8 Q290,320 399,441 Q394,414 383.6,393.7 Q320,330 276,277.1 Q240,190 220.3,115.9"/>
+
+    <!-- pins injected by JS -->
+    <g id="pins"></g>
+  </svg>
+</div>
+
+<nav class="rail" id="rail" aria-label="Wines in pouring order"></nav>
+
+<div class="credit">James Vance and Ketan Jha</div>
+
+<div class="backdrop" id="backdrop"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"></section>
+
+<script>
+const GRAPE_COLORS = {
+  "Lambrusco Maestri":"#5C2734",
+  "Fiano":"#B98F3E","Falanghina":"#D3B266",
+  "Sangiovese":"#8E3644","Merlot":"#5A3050","Sagrantino":"#3C2230","Ciliegiolo":"#C05A50",
+  "Corvina":"#7E2F3C","Rondinella":"#A05262","Corvinone":"#57202B"
+};
+
+const WINES = [
+  {
+    n:1, x:176.6, y:161.8, label:"PARMA", lx:-22, ly:5, anchor:"end",
+    short:"Donati Lambrusco", style:"Sparkling red",
+    title:"'Il Mio' Lambrusco", producer:"Camillo Donati · Lambrusco dell'Emilia IGP",
+    facts:["100% Lambrusco Maestri","Emilia-Romagna · Parma hills, ~250 m","NV bottling · ~12% abv","Serve 8–10 °C, chilled"],
+    blends:[],
+    story:"A third-generation estate (founded 1930) in the hills near Langhirano, which you might know as prosciutto country. Certified biodynamic. Every wine, whites included, ferments on its skins with wild yeasts, then referments in the bottle the old 'ancestral' way. This unfiltered, effervescent purple juice is what Lambrusco was before it became industrial, saccharine, and consigned to oblivion by way of the export market. It's dry, dark, and gently tannic.<br><br>As a natural wine, it is a showcase for both lower sweetness and (arguably) higher drinkability compared to its industrial forebears.",
+    glass:"Blackberry, sour cherry and violets over an earthy, rustic fizz; brisk acidity and a bone-dry finish. If there's salumi on the table, this is its wine."
+  },
+  {
+    n:2, x:399, y:441, label:"CILENTO", lx:-22, ly:6, anchor:"end",
+    short:"Fratelli Felix Bianco", style:"Skin-contact white",
+    title:"Fratelli Felix Bianco", producer:"Vigneti Tardis · Campania IGP (Paestum / Cilento)",
+    facts:["Campania · Cilento hills","~12% abv · 2 days on skins","Serve 8–10 °C"],
+    blends:[{title:"The blend", segs:[["Fiano",60],["Falanghina",40]]}],
+    story:"The evening's southernmost stop. A collaborative project from Vigneti Tardis, consisting of Jack Lewens, once a sommelier and now co-owner of Leroy in Shoreditch, with veteran Cilento winemaker Bruno De Conciliis, and the source of all things in UK natural wine — Les Caves de Pyrene.<br><br>Vigneti Tardis sources organic fruit along the coast south of Paestum, whose Doric columns you may know as the heart of Magna Graecia, the Greek colonies in ancient Italy. The 60/40 blend of Fiano (the waxy, fuller grape) and Falanghina (the citric, lighter one) sees two days of skin maceration, wild yeasts in steel, unfined and unfiltered. The colour compounds, anthocyanins, diffuse from the grape skins into the liquid, yielding an orange wine.",
+    glass:"Golden and bone-dry by conventional standards. Quince, grapefruit and peach with a saline streak and a waxy, gently grippy texture from the skins — a medium weight orange wine. A deliberate contrast with the extraordinary Fiano to follow. What do you think?"
+  },
+  {
+    n:3, x:383.6, y:393.7, label:"IRPINIA", lx:22, ly:5, anchor:"start",
+    short:"Marsella Fiano 2021", style:"Aged white",
+    title:"Fiano di Avellino DOCG 2021", producer:"Guido Marsella · Summonte, Irpinia",
+    facts:["100% Fiano","Campania · ~600 m, Partenio park","2021 · ~13.5% abv","Serve 10–12 °C, not too cold"],
+    blends:[],
+    story:"A builder who planted vines at altitude in 1995 and became the pioneer of mature-release Fiano — the first producer to hold the wine back on its lees in steel and release it only when ready, a practice the whole of Irpinia then followed. Clay-loam soils threaded with volcanic material; Summonte is now spoken of as a cru. Same grape as stop two, utterly different philosophy.",
+    glass:"Smoke, hazelnut, pear and honey over a mineral spine, with the texture of nearly five years' patience. Fiano at this level ages ten years and more."
+  },
+  {
+    n:4, x:276, y:277.1, label:"UMBRIA · TODI", lx:22, ly:5, anchor:"start",
+    short:"Stesso Stesso '23 / '24", style:"Light red · two vintages",
+    title:"Stesso Stesso Rosso — 2023 v 2024", producer:"Beulah Violetta · Canonica, above Todi",
+    facts:["Umbria · Tiber valley, 450–500 m","~12.5% abv","Serve ~14 °C, lightly chilled"],
+    blends:[
+      {title:"2023 field blend", segs:[["Sangiovese",60],["Merlot",30],["Sagrantino",10]], swap:"Sagrantino"},
+      {title:"2024 field blend", segs:[["Sangiovese",60],["Merlot",30],["Ciliegiolo",10]], swap:"Ciliegiolo",
+       legend:"Ciliegiolo takes the Sagrantino slot — same site, same method, one grape swapped."}
+    ],
+    story:"Annie Conley and James Hird — co-founder of Sydney's Rootstock festival — bought this farm in 2022 and are converting it to biodynamics. Whole bunches, three days' maceration, wild yeasts, steel, almost nothing added: 'Umbrian Beaujolais'. Stesso stesso means 'same same' — the joke of this pour is that it isn't. 2023 carries a dash of Sagrantino, Italy's most tannic grape, which brings grip and dark spice even at ten percent. In 2024, Ciliegiolo — 'little cherry' — sits in its place: brighter, softer, more perfumed. They've since replanted the Sagrantino to Ciliegiolo, so the 2023 is a small piece of the estate's history.",
+    glass:"Ask the room to call the difference blind: where the '23 shows brambly grip and baking spice, the '24 should lean red-cherried and floral. Both want a light chill."
+  },
+  {
+    n:5, x:220.3, y:115.9, label:"VALPOLICELLA", lx:22, ly:5, anchor:"start",
+    short:"Corte del Pozzo Ripasso 2019", style:"Structured red",
+    title:"'La Corte del Pozzo' Ripasso 2019", producer:"Fasoli Gino · Valpolicella Ripasso DOC",
+    facts:["Veneto · Colognola ai Colli, Verona","2019 · ~14% abv","Serve 16–18 °C"],
+    blends:[{title:"The blend", segs:[["Corvina",50],["Rondinella",30],["Corvinone",20]]}],
+    story:"Founded 1925 and among Italy's earliest organic converts (1980), Demeter biodynamic since 2006. Ripasso means 're-passed': the finished Valpolicella spends about fifteen days on the warm, spent Amarone skins (or 'pomace') with the addition of dried grapes - Veneto's signature 'appassimento' method. 16–24 months in large oak follows. The result sits between Valpolicella and Amarone, a 'baby Amarone' with its freshness intact. Named for the well, the pozzo, where local growers once gathered on the estate.",
+    glass:"Morello cherry, blackberry and prune with licorice and pepper. The camphorous notes and brighter fruits settle down as the wine oxidises. Full-bodied but balanced. The goose on the label is Gino. This vintage received a 94 from Wine Enthusiast, who are known as one of the harsher outlets. That places it in the top 5% of wines reviewed."
+  }
+];
+
+WINES.sort((a,b)=>a.n-b.n);
+
+const pins = document.getElementById('pins');
+const rail = document.getElementById('rail');
+const sheet = document.getElementById('sheet');
+const backdrop = document.getElementById('backdrop');
+const svgns = "http://www.w3.org/2000/svg";
+let current = null;
+
+WINES.forEach((w,i)=>{
+  // pin
+  const g = document.createElementNS(svgns,'g');
+  g.setAttribute('class','pin'); g.setAttribute('tabindex','0');
+  g.setAttribute('role','button');
+  g.setAttribute('aria-label',`Stop ${w.n}: ${w.short}`);
+  g.innerHTML = `
+    <circle class="halo" cx="${w.x}" cy="${w.y}" r="14"/>
+    <circle class="dot" cx="${w.x}" cy="${w.y}" r="13"/>
+    <text class="num" x="${w.x}" y="${w.y+0.5}">${w.n}</text>
+    <text class="pin-label" x="${w.x+w.lx}" y="${w.y+w.ly}" text-anchor="${w.anchor}">${w.label}</text>`;
+  g.addEventListener('click',()=>open(i));
+  g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open(i);}});
+  pins.appendChild(g);
+
+  // chip
+  const c = document.createElement('button');
+  c.className='chip';
+  c.innerHTML=`<span class="n">${w.n}</span><span>${w.short}<small>${w.style}</small></span>`;
+  c.addEventListener('click',()=>open(i));
+  rail.appendChild(c);
+});
+
+function blendHTML(b){
+  const segs = b.segs.map(([g,p])=>
+    `<div class="seg${b.swap===g?' swap':''}" style="width:${p}%;background:${GRAPE_COLORS[g]||'#777'}">${p>=18?`${g} ${p}%`:''}</div>`
+  ).join('');
+  const small = b.segs.filter(([g,p])=>p<18).map(([g,p])=>`${g} ${p}%`).join(' · ');
+  return `<div class="blend">
+    <div class="blend-title">${b.title}</div>
+    <div class="bar">${segs}</div>
+    ${small?`<div class="legend">${small}</div>`:''}
+    ${b.legend?`<div class="legend">${b.legend}</div>`:''}
+  </div>`;
+}
+
+function open(i){
+  const w = WINES[i];
+  current = i;
+  document.querySelectorAll('.pin').forEach((p,j)=>p.classList.toggle('active',j===i));
+  document.querySelectorAll('.chip').forEach((c,j)=>c.classList.toggle('active',j===i));
+  sheet.innerHTML = `
+    <div class="grab"></div>
+    <button class="close" aria-label="Close">×</button>
+    <div class="stop-eyebrow">Stop ${w.n} of 5 · ${w.style}</div>
+    <h2 id="sheetTitle">${w.title}</h2>
+    <div class="producer">${w.producer}</div>
+    <div class="facts">${w.facts.map(f=>`<span class="fact">${f}</span>`).join('')}</div>
+    ${w.blends.map(blendHTML).join('')}
+    <h3>The story</h3><p>${w.story}</p>
+    <h3>In the glass</h3><p>${w.glass}</p>
+    <hr class="rule">
+  `;
+  sheet.querySelector('.close').addEventListener('click',close);
+  sheet.classList.add('show');
+  backdrop.classList.add('show');
+  sheet.scrollTop = 0;
+}
+function close(){
+  sheet.classList.remove('show');
+  backdrop.classList.remove('show');
+  document.querySelectorAll('.pin').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  current = null;
+}
+backdrop.addEventListener('click',close);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+</script>
+</body>
+</html>
